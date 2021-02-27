@@ -60,12 +60,12 @@ const addContact = async (body) => {
 const updateContact = async (contactId, body) => {
   try {
     const data = await fs.readFile(contactsPath, { encoding: 'utf8' })
-    const parsedData = JSON.stringify(data)
-    const contactToUpdate = parsedData.find(cnt => cnt.id == contactId)
-    const updatedContact = JSON.stringify(Object.assign(contactToUpdate, body))
-    // const updatedContact = { ...contactToUpdate, ...body }
-    const updatedList = await fs.writeFile(contactsPath, JSON.stringify(updatedContact, null, 2), { encoding: 'utf8' })
-    return updatedContact
+    const parsedData = JSON.parse(data)
+    const index = parsedData.findIndex(elem => elem.id == contactId)
+    const updCnt = { ...parsedData[index], ...body }
+    parsedData.splice(index, 1, updCnt)
+    await fs.writeFile(contactsPath, JSON.stringify(parsedData, null, 2), { encoding: 'utf8' })
+    return updCnt
   } catch (err) {
     console.log(err)
   }
