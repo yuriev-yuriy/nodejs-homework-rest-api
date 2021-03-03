@@ -17,7 +17,7 @@ const contactSchema = new Schema({
     required: [true, 'Set contact number'],
     unique: true,
   },
-})
+}, { versionKey: false, timestamps: true })
 
 const Contact = model('contact', contactSchema)
 
