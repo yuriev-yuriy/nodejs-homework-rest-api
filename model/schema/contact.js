@@ -17,6 +17,15 @@ const contactSchema = new Schema({
     required: [true, 'Set contact number'],
     unique: true,
   },
+  subscription: {
+    type: String,
+    message: ['free' || 'pro' || 'premium'],
+    default: 'free',
+  },
+  password: {
+    type: String,
+    required: [true, 'Set contact number'],
+  }
 }, { versionKey: false, timestamps: true })
 
 const Contact = model('contact', contactSchema)
