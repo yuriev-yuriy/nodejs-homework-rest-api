@@ -1,17 +1,17 @@
 const Contact = require('./schema/contact')
 
 const listContacts = async () => {
-  const results = await Contact.find({})
+  const results = await Contact.find({}, { __v: 0 })
   return results
 }
 
 const getContactById = async (contactId) => {
-  const result = await Contact.findOne({ _id: contactId })
+  const result = await Contact.findOne({ _id: contactId }).select('-__v')
   return result
 }
 
 const removeContact = async (contactId) => {
-  const result = await Contact.findByIdAndRemove({ _id: contactId })
+  const result = await Contact.findByIdAndRemove(contactId)
   return result
 }
 
@@ -22,10 +22,10 @@ const addContact = async (body) => {
 
 const updateContact = async (contactId, body) => {
   const result = await Contact.findByIdAndUpdate(
-    { _id: contactId },
+    contactId,
     { ...body },
     { new: true },
-  )
+  ).select('-__v')
   return result
 }
 
