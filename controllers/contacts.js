@@ -2,6 +2,7 @@ const Contacts = require('../model/contacts')
 
 const listContacts = async (req, res, next) => {
   try {
+    console.log(req)
     const userId = req.user.id
     const contacts = await Contacts.listContacts(userId, req.query)
     return res.json({

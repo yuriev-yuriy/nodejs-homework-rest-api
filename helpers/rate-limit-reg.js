@@ -3,7 +3,7 @@ const { HttpCode } = require('./constants')
 
 const createRegLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 2,
+  max: 120,
   handler: (req, res, next) => {
     return res.status(HttpCode.BAD_REQUEST).json({
       status: 'error',
