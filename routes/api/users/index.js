@@ -7,5 +7,6 @@ const { createRegLimiter } = require('../../../helpers/rate-limit-reg')
 router.post('/registration', createRegLimiter, userController.reg)
 router.post('/login', userController.login)
 router.post('/logout', guard, userController.logout)
+router.get('/current', guard, userController.getCurrent)
 
 module.exports = router
