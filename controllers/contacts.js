@@ -1,13 +1,15 @@
-const Contacts = require('../model/index')
+const Contacts = require('../model/contacts')
 
 const listContacts = async (req, res, next) => {
   try {
-    const contacts = await Contacts.listContacts()
+    console.log(req)
+    const userId = req.user.id
+    const contacts = await Contacts.listContacts(userId, req.query)
     return res.json({
       status: 'success',
       code: 200,
       data: {
-        contacts,
+        ...contacts,
       },
     })
   } catch (err) {
@@ -17,7 +19,8 @@ const listContacts = async (req, res, next) => {
 
 const getContactById = async (req, res, next) => {
   try {
-    const contact = await Contacts.getContactById(req.params.contactId)
+    const userId = req.user.id
+    const contact = await Contacts.getContactById(req.params.contactId, userId)
     if (contact) {
       return res.json({
         status: 'success',
@@ -40,7 +43,8 @@ const getContactById = async (req, res, next) => {
 
 const addContact = async (req, res, next) => {
   try {
-    const contact = await Contacts.addContact(req.body)
+    const userId = req.user.id
+    const contact = await Contacts.addContact({ ...req.body, owner: userId })
     return res.status(201).json({
       status: 'success',
       code: 201,
@@ -55,7 +59,8 @@ const addContact = async (req, res, next) => {
 
 const removeContact = async (req, res, next) => {
   try {
-    const contact = await Contacts.removeContact(req.params.contactId)
+    const userId = req.user.id
+    const contact = await Contacts.removeContact(req.params.contactId, userId)
     if (contact) {
       return res.json({
         status: 'success',
@@ -80,7 +85,8 @@ const removeContact = async (req, res, next) => {
 
 const updateContact = async (req, res, next) => {
   try {
-    const contact = await Contacts.updateContact(req.params.contactId, req.body)
+    const userId = req.user.id
+    const contact = await Contacts.updateContact(req.params.contactId, req.body, userId)
     if (contact) {
       return res.json({
         status: 'success',
