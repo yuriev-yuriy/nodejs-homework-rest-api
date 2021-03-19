@@ -1,7 +1,10 @@
 const jwt = require('jsonwebtoken')
 const Users = require('../model/users')
+const fs = require('fs').promises
+const path = require('path')
+const Jimp = require('jimp')
 const { HttpCode } = require('../helpers/constants')
-const User = require('../model/schema/user')
+const createFolderExist = require('../helpers/create-dir')
 require('dotenv').config()
 const SECRET_KEY = process.env.JWT_SECRET
 
@@ -93,4 +96,45 @@ const logout = async (req, res, next) => {
   return res.status(HttpCode.NO_CONTENT).json({})
 }
 
-module.exports = { reg, login, logout, getCurrent }
+const avatars = async (req, res, next) => {
+  try {
+    const id = req.user.id
+    const avatarUrl = await saveAvatarToStaic(req)
+    await Users.updateAvatar(id, avatarUrl)
+    return res.json({
+      status: 'success',
+      code: HttpCode.OK,
+      data: {
+        avatarUrl,
+      },
+    })
+  } catch (err) {
+    next(err)
+  }
+}
+const saveAvatarToStaic = async (req) => {
+  const id = req.user.id
+  const AVATARS_OF_USERS = process.env.AVATARS_OF_USERS
+  const AVATARS_INNER = process.env.AVATARS_INNER
+  const pathFile = req.file.path
+  const newNameAvatar = `${req.file.originalname}`
+  const img = await Jimp.read(pathFile)
+  await img
+    .autocrop()
+    .cover(
+      250,
+      250,
+      Jimp.HORIZONTAL_ALIGN_CENTER | Jimp.VERTICAL_ALIGN_MIDDLE,)
+    .writeAsync(pathFile)
+  await createFolderExist(path.join(AVATARS_OF_USERS, AVATARS_INNER))
+  await fs.rename(pathFile, path.join(AVATARS_OF_USERS, AVATARS_INNER, newNameAvatar))
+  const avatarUrl = path.normalize(newNameAvatar)
+  try {
+    await fs.unlink(path.join(process.cwd(), AVATARS_OF_USERS, req.user.avatar),)
+  } catch (err) {
+    console.log(err.message)
+  }
+  return avatarUrl
+}
+
+module.exports = { reg, login, logout, getCurrent, avatars }
