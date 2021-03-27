@@ -36,11 +36,11 @@ const userSchema = new Schema(
     },
     verify: {
       type: Boolean,
-      default: null,
+      default: false,
     },
     verifyToken: {
       type: String,
-      required: [true, 'Verify token required']
+      required: [true, 'Verify token required'],
     }
   }, { timestamps: true },
 )
