@@ -3,14 +3,16 @@ const Users = require('../model/users')
 const fs = require('fs').promises
 const path = require('path')
 const Jimp = require('jimp')
+const { nanoid } = require('nanoid')
 const { HttpCode } = require('../helpers/constants')
+const EmailService = require('../services/email')
 const createFolderExist = require('../helpers/create-dir')
 require('dotenv').config()
 const SECRET_KEY = process.env.JWT_SECRET
 
 const reg = async (req, res, next) => {
   try {
-    const { email } = req.body
+    const { email, name } = req.body
     const user = await Users.findByEmail(email)
     if (user) {
       return res.status(HttpCode.CONFLICT).json({
@@ -20,7 +22,10 @@ const reg = async (req, res, next) => {
         message: 'Email in use'
       })
     }
-    const newUser = await Users.create(req.body)
+    const verifyToken = nanoid()
+    const emailService = new EmailService(process.env.NODE_ENV)
+    await emailService.sendEmail(verifyToken, email, name)
+    const newUser = await Users.create({ ...req.body, verify: false, verifyToken })
     return res.status(HttpCode.CREATED).json({
       status: 'success',
       code: HttpCode.CREATED,
@@ -41,7 +46,7 @@ const login = async (req, res, next) => {
     const { email, password } = req.body
     const user = await Users.findByEmail(email)
     const isValidPassword = await user?.validPassword(password)
-    if (!user || !isValidPassword) {
+    if (!user || !isValidPassword || !user.verify) {
       return res.status(HttpCode.UNAUTHORIZED).json({
         status: 'error',
         code: HttpCode.UNAUTHORIZED,
@@ -99,7 +104,7 @@ const logout = async (req, res, next) => {
 const avatars = async (req, res, next) => {
   try {
     const id = req.user.id
-    const avatarUrl = await saveAvatarToStaic(req)
+    const avatarUrl = await saveAvatarToStatic(req)
     await Users.updateAvatar(id, avatarUrl)
     return res.json({
       status: 'success',
@@ -112,7 +117,7 @@ const avatars = async (req, res, next) => {
     next(err)
   }
 }
-const saveAvatarToStaic = async (req) => {
+const saveAvatarToStatic = async (req) => {
   const id = req.user.id
   const AVATARS_OF_USERS = process.env.AVATARS_OF_USERS
   const AVATARS_INNER = process.env.AVATARS_INNER
@@ -137,4 +142,26 @@ const saveAvatarToStaic = async (req) => {
   return avatarUrl
 }
 
-module.exports = { reg, login, logout, getCurrent, avatars }
+const verify = async (req, res, next) => {
+  try {
+    const user = await Users.findByVerifyToken(req.params.token)
+    if (user) {
+      await Users.updateVerifyToken(user.id, true, null)
+      return res.json({
+        status: 'success',
+        code: HttpCode.OK,
+        message: 'Verification successful'
+      })
+    }
+    return res.status(HttpCode.NOT_FOUND).json({
+      status: 'error',
+      code: HttpCode.NOT_FOUND,
+      data: 'Bad request',
+      message: 'Link is not valid',
+    })
+  } catch (err) {
+    next(err)
+  }
+}
+
+module.exports = { reg, login, logout, getCurrent, avatars, verify }
